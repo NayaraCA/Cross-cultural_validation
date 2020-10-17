@@ -1,0 +1,67 @@
+---
+title: "Relação com outras variáveis"
+author: "Nayara"
+date: "11/24/2019"
+output: html_document
+---
+
+```{r}
+library(qgraph)
+```
+
+
+```{r}
+library(readxl)
+validadeexterna <- read_excel("C:/Users/nayar/Dropbox/Doutorado/Projeto Doutorado/Projeto/Estudo 2 - Validação CAAS/Validação AFC/Validade externa.xlsx")
+View(validadeexterna)
+```
+
+
+### Correlação para validade externa
+```{r}
+library(stats)
+cor_data<-cor_auto(validadeexterna[,c(20:22,34,47)])
+cor_data
+```
+
+### Gerar heatmap para demonstração da matriz de correlação
+```{r}
+library(reshape2)
+cormat <- round((cor_data),2)
+head(cormat)
+
+melted_cormat <- melt(cormat)
+head(melted_cormat)
+library(ggplot2)
+ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()
+
+get_upper_tri <- function(cormat)
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+```
+
+
+
+### Heatmap
+```{r}
+ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "green", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Items\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed()
+```
+
+```{r}
+usethis::use_git()
+```
+
+```{r}
+usethis::use_github()
+```
+
+

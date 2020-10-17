@@ -1,0 +1,249 @@
+---
+title: "Picada de cobra"
+author: "Nayara"
+date: "11/26/2019"
+output: html_document
+---
+
+## Baixar o banco
+```{r}
+library(readxl)
+picada <- read.csv("C:/Users/nayar/Dropbox/Doutorado/Sanduíche/Duke University/Tarefas/Picada de cobra/psfs_all_data.csv")
+View(picada)
+```
+
+
+
+########################
+## Descriptives
+```{r}
+library(pastecs)
+summary(picada$PROMIS_7days)
+summary(picada$PROMIS_14days)
+summary(picada$PROMIS_21days)
+summary(picada$SF36_total_14days)
+summary(picada$SF36_total_21days)
+summary(picada$SF36_total_7days)
+
+```
+
+
+```{r}
+sd(picada$PROMIS_7days, na.rm = TRUE)
+sd(picada$PROMIS_14days, na.rm = TRUE)
+sd(picada$PROMIS_21days, na.rm = TRUE)
+sd(picada$SF36_total_7days, na.rm = TRUE)
+sd(picada$SF36_total_14days, na.rm = TRUE)
+sd(picada$SF36_total_21days, na.rm = TRUE)
+```
+
+
+
+## ICC
+```{r}
+#install.packages("irr v0.84.1")
+#install.packages("lpSolve")
+library(lpSolve)
+library(irr)
+
+x<-icc(data.frame(picada$PROMIS_14days,picada$PROMIS_21days))
+x
+y<-icc(data.frame(picada$SF36_total_14days,picada$SF36_total_21days))
+y
+```
+
+```{r}
+x<-icc(data.frame(picada$PROMIS_14days,picada$PROMIS_7days))
+x
+```
+
+```{r}
+y<-icc(data.frame(picada$SF36_total_14days,picada$SF36_total_7days))
+y
+```
+
+
+
+## SEM PROMIS
+```{r}
+library(OptimalCutpoints)
+
+#Pooled SD change
+mean_diff_numeric<-picada$PROMIS_14days-picada$PROMIS_7days
+
+#sd_baseline<-sd(picada$PROMIS_7days)
+sd_pooled<-sd(mean_diff_numeric, na.rm = TRUE)
+sd_pooled
+
+# Formula for the SEM
+SEMpromis<-sd_pooled*sqrt(1-0.685)
+SEMpromis*1.96
+## onde icc é o coeficiente q vc vai encontrar fazendo o ICC entre o dia 7 e dia 14, para cada uma das escalas
+
+picada$mean_diff_numeric<-mean_diff_numeric
+#install.packages("OptimalCutpoints")
+#library(OptimalCutpoints)
+optimal_promis_large <- optimal.cutpoints(X = "mean_diff_numeric", 
+                                             status = "change_cat_PGIC1_large", 
+                                             tag.healthy = "stable",
+                                             methods = "Youden", 
+                                             data = picada,  
+                                             pop.prev = NULL, 
+                                             categorical.cov = NULL, #"gender",
+                                             control = control.cutpoints(), 
+                                             ci.fit = FALSE, 
+                                             conf.level = 0.95, 
+                                             trace = FALSE)
+optimal_promis_large
+```
+
+## SEM SF-36
+```{r}
+#Pooled SD change
+mean_diff_numericSF<-picada$SF36_total_14days-picada$SF36_total_7days
+
+#sd_baseline<-sd(picada$PROMIS_7days)
+sd_pooledSF<-sd(mean_diff_numericSF, na.rm = TRUE)
+sd_pooledSF
+
+# Formula for the SEM
+SEMSF<-sd_pooled*sqrt(1-0.633)
+SEMSF*1.96
+## onde icc é o coeficiente q vc vai encontrar fazendo o ICC entre o dia 7 e dia 14, para cada uma das escalas
+
+picada$mean_diff_numericSF<-mean_diff_numericSF
+#install.packages("OptimalCutpoints")
+#library(OptimalCutpoints)
+optimal_sf_large <- optimal.cutpoints(X = "mean_diff_numericSF", 
+                                             status = "change_cat_PGIC1_large", 
+                                             tag.healthy = "stable",
+                                             methods = "Youden", 
+                                             data = picada,  
+                                             pop.prev = NULL, 
+                                             categorical.cov = NULL, #"gender",
+                                             control = control.cutpoints(), 
+                                             ci.fit = FALSE, 
+                                             conf.level = 0.95, 
+                                             trace = FALSE)
+optimal_sf_large
+```
+
+
+## MCID between-individual
+# STABLE
+```{r}
+## calcular a méida da diferenca entre T3 e T7 para o grupo estavel e instavel
+
+## fazer um subset to banco entre stable e improved de acordo com a variavel change_cat_PGIC1_large e criar dois bancos, um para stable e um para improve
+
+subset(picada, change_cat_PGIC1_large == "stable")
+stable<-subset(picada, change_cat_PGIC1_large == "stable")
+View(stable)
+
+mean(stable$SF36_total_7days, na.rm = TRUE)
+mean(stable$SF36_total_14days, na.rm = TRUE)
+mean(stable$SF36_total_21days, na.rm = TRUE)
+
+meanstable <- mean(stable$SF36_total_14days, na.rm = TRUE) - mean(stable$SF36_total_7days, na.rm = TRUE)
+meanstable
+
+#mean(stable$SF36_total_21days, na.rm = TRUE) - mean(stable$SF36_total_14days, na.rm = TRUE)
+
+mean(stable$PROMIS_7days, na.rm = TRUE)
+mean(stable$PROMIS_14days, na.rm = TRUE)
+mean(stable$PROMIS_21days, na.rm = TRUE)
+
+meansstablePRO <- mean(stable$PROMIS_14days, na.rm = TRUE) - mean(stable$PROMIS_7days, na.rm = TRUE)
+meansstablePRO
+```
+# IMPROVED
+```{r}
+subset(picada, change_cat_PGIC1_large == "improved")
+improved<-subset(picada, change_cat_PGIC1_large == "improved")
+View(improved)
+
+mean(improved$SF36_total_7days, na.rm = TRUE)
+mean(improved$SF36_total_14days, na.rm = TRUE)
+mean(improved$SF36_total_21days, na.rm = TRUE)
+
+meanimproved <- mean(improved$SF36_total_14days, na.rm = TRUE) - mean(improved$SF36_total_7days, na.rm = TRUE)
+meanimproved
+
+mean(improved$PROMIS_7days, na.rm = TRUE)
+mean(improved$PROMIS_14days, na.rm = TRUE)
+mean(improved$PROMIS_21days, na.rm = TRUE)
+
+meanimprovedPRO <- mean(improved$PROMIS_14days, na.rm = TRUE) - mean(improved$PROMIS_7days, na.rm = TRUE)
+meanimprovedPRO
+```
+
+## MCID between-individual
+```{r}
+SF36MCID <- meanimproved - meanstable
+SF36MCID
+
+PROMCID <- meanimprovedPRO - meansstablePRO
+PROMCID
+```
+
+
+```{r}
+table(picada$PROMIS_7days)
+prop.table(table(picada$PROMIS_7days)) *100
+
+table(picada$PROMIS_14days)
+prop.table(table(picada$PROMIS_14days)) *100
+
+table(picada$PROMIS_21days)
+prop.table(table(picada$PROMIS_21days)) *100
+```
+
+
+
+```{r}
+table(picada$SF36_total_7days)
+prop.table(table(picada$SF36_total_7days)) *100
+
+table(picada$SF36_total_14days)
+prop.table(table(picada$SF36_total_14days)) *100
+
+table(picada$SF36_total_21days)
+prop.table(table(picada$SF36_total_21days)) *100
+```
+
+
+```{r}
+library(qgraph)
+cor_datasf<-cor_auto(picada[,c(2,4,11,13)])
+cor_datasf
+```
+
+
+```{r}
+library(qgraph)
+cor_datapr<-cor_auto(picada[,c(2,4,14,16)])
+cor_datapr
+```
+
+
+```{r}
+cor.test(picada[psfs_FUP_14.x,psfs_FUP_7.x, SF36_total_14days, SF36_total_7days])
+cor.test(picada$psfs_FUP_14.x, picada$PROMIS_14days)
+corr.test(cor_datapr)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

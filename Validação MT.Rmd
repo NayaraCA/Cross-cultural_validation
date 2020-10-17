@@ -1,0 +1,394 @@
+---
+title: "Validação MT"
+author: "Nayara"
+date: "3/3/2020"
+output: html_document
+---
+
+
+```{r}
+library("VIM")
+library("VIMGUI")
+library("gWidgetsRGtk2")
+library("mi")
+#library("epicalc")
+library("sem")
+library("ggplot2")
+library("psych")
+library("RCurl")
+library("irr")
+library("nortest")
+library("moments")
+library("GPArotation")
+library("nFactors")
+library("boot")
+library("psy")
+library("car")
+library("vcd")
+library("gridExtra")
+library("gdata")
+library("sqldf")
+library("reshape2")
+library("mclust")
+library("foreign")
+library("survival")
+library("memisc")
+library("lme4")
+library("lmerTest")
+library("dplyr")
+library("QCA")
+library("VennDiagram")
+library("qgraph")
+library("igraph")
+library("ltm")
+library("gmodels")
+library("eRm")
+library("mirt")
+library("dplyr")
+library("devtools")
+library("reshape")
+library("readxl")
+library("openxlsx")
+library("Hmisc")
+library("bootnet")
+library("readxl")
+library(rgbif)
+```
+
+
+######################################################
+### Importando o banco de dados
+```{r}
+dataMT <- read_excel("C:/Users/nayar/OneDrive/Área de Trabalho/MT_JUBs2018.xlsx")
+View(dataMT)
+```
+
+
+#####################################################
+### RANDOMIZAR OS DADOS#
+
+```{r}
+dadosrandomizados <- dataCAAS
+View(dadosrandomizados)
+
+dadosrandomizados[sample(nrow(dadosrandomizados), 400),]
+CAASAFE <- dadosrandomizados[sample(nrow(dadosrandomizados), 400),]
+View(CAASAFE)
+```
+
+
+## IMPUTAR OS DADOS
+```{r}
+#library(mice)
+colnames(dataMT)
+# argument method=c("") indicated the imputation system (see Table 1 in http://www.jstatsoft.org/article/view/v045i03). Leaving "" to the position of the variable in the method argument excludes the targeted variable from the imputation.
+data_imputed <- mice(dataMT[,c(14:21)], seed = 500, m=5)
+
+# reports the complete dataset with missing imputated. It returns 5 options of datasets, witht he 5 imputation possibilities. To choose a specific option, add # as argument. Ex. complete(imp,2)
+dataMTI<-complete(data_imputed,4)
+```
+
+
+############################################################
+#Descriptives
+#############################################################
+#BASIC DESCRIPTIVES and EXPLORATORY ANALYSIS
+#############################################################
+#Section wih several exploratory data analysis functions
+###### Exploratory Data Anlysis
+###### UNIVARIATE
+```{r}
+library(pastecs)
+dim(dataMTI)
+str(dataMTI)
+head(dataMTI)
+names(dataMTI)
+sapply(dataMTI, mean, na.rm=TRUE)
+stat.desc(dataMTI, basic=TRUE, desc=TRUE, norm=FALSE, p=0.95)
+with(dataMTI,by(dataMTI, ad.test))
+stat.desc(dataMTI)
+#with (dataCAAS, t.test(dataCAAS, Idade))
+#with(dataCAAS,by(dataCAAS,outcome,ad.test)) # Anderson-Darling test for normality
+#skewness(dataCAAS) #Will provide skweness analysis
+#kurtosis(dataCAAS$Idade) - 3 #Will provide kurtosis analysis
+#qplot(dataCAAS$Idade) # histogram plot
+```
+
+
+### Numerical descriptives
+```{r}
+library(Hmisc)
+summary(dataMTI) #This comand will provide a whole set of descriptive #results for each variables
+describe(dataMTI)
+#with(dataCAAS,by(dataCAAS,outcome,describe))
+#with(dataCAAS,by(dataCAAS,outcome,summary))
+```
+
+
+
+##############################################################
+### NETWORK 
+##############################################################
+```{r}
+# # Define the amout of factor to retain
+#Group of functinos to determine the number os items to be extracted
+library(qgraph)
+colnames(dataMTI)
+cor_dataMT<-cor_auto(dataMTI)### sem dimensões e variáveis independentes
+cor_dataMT
+```
+
+
+### Community analysis
+```{r}
+library(igraph)
+comprehension_network_glasso<-qgraph(cor_dataMT,
+layout="spring",
+vsize=6,esize=20,graph="glasso",
+sampleSize=nrow(dataMT),
+legend.cex = 2.0,GLratio=1.5,minimum=0.1, threshold = TRUE)
+```
+
+
+##Calculating Community measures
+```{r}
+library(intergraph)
+library(igraph)
+library(qgraph)
+g <- as.igraph(comprehension_network_glasso) #creating igraph object
+#h<-walktrap.community(g) #creatin community object
+#h<-spinglass.community(g, weights=NA)
+h<-cluster_louvain(g)
+plot(h,g) #plotting community network
+h$membership #extracting community weights=NAmembership for each node on the network
+community<-data.frame(h$membership,rownames(cor_dataMT))
+```
+
+### Building network figures 
+# 3 types are created to get an avarege position and layout
+
+```{r}
+#GLASSO NETWORK
+network_glasso<-qgraph(cor_dataMT,layout="spring",
+ 	vsize=6,esize=20,graph="glasso",
+ 	sampleSize=nrow(dataMT),
+ 	legend.cex = 0.5,GLratio=1.5)
+```
+
+
+
+
+```{r}
+#PARTIAL CORRELATION NETWORK
+network_pcor<-qgraph(cor_dataMT,layout="spring",
+vsize=6,esize=20,graph="pcor",threshold="holm",
+sampleSize=nrow(dataMT),
+legend.cex = 0.5,GLratio=1.5)
+network_pcor
+```
+
+
+
+```{r}
+#CORRELATION NETWORK
+network_cor<-qgraph(cor_dataMT,layout="spring",
+vsize=6,esize=20,legend.cex = 0.5,GLratio=1.5)
+layout1<-averageLayout(network_glasso,network_pcor,network_cor)
+```
+
+
+
+```{r}
+library(qgraph)
+centralityPlot(network_cor) 
+centralityPlot(network_glasso, include = c("Betweenness","Strength", "Closeness"), 
+                                      labels = colnames(cor_dataMT))
+```
+
+
+
+```{r}
+#boot1 <- bootnet(cor_data, nBoots = 1000, default = c("cor"), 
+#                 type =c("nonparametric"), nCores = 8, statistics =
+#                 c("edge"), 
+#                 model = c("detect"), 
+#                 verbose = TRUE, alpha =
+#                 1, caseMin = 0.05, caseMax = 0.75, #caseN = 19,
+#                 computeCentrality = TRUE, propBoot
+#                 = 1, replacement = FALSE, graph, sampleSize,
+#                 intercepts, weighted)
+summary(boot1) 
+plot(boot1, labels=FALSE, order="sample") 
+
+
+#boot2 <- estimateNetwork(cor_dataMT, default = c("cor"),
+#                labels, verbose = TRUE,
+#                 .dots = list(), weighted = TRUE, signed = TRUE,
+#                 directed, datatype, checkNumeric = FALSE,
+#                 memorysaver = FALSE)
+
+summary(boot2) 
+plot(boot2, labels=TRUE, order="sample") 
+```
+
+
+### Gerar heatmap para demonstração da matriz de correlação ##################
+```{r}
+#install.packages("ggplot2")
+#library(ggplot2)
+#library(qgraph)
+##### com todos os itens
+cor_dataMTHM<-cor_auto(dataMT[,c(14:21)])
+library(reshape2)
+cormat <- round((cor_dataMTHM),2)
+head(cormat)
+
+melted_cormat <- melt(cormat)
+head(melted_cormat)
+library(ggplot2)
+ggplot(data = melted_cormat, aes(x=X1, y=X2, fill=value)) + 
+  geom_tile()
+
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+}
+
+upper_tri <- get_upper_tri(cormat)
+upper_tri
+```
+
+
+###### Heatmap
+```{r}
+ggplot(data = melted_cormat, aes(X2, X1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "green", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Items\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed()
+```
+
+
+```{r}
+fitMT <- psych::principal(cor_dataMT,nfactors=1,rotate="none",scores=TRUE)
+fitMT
+summary(fitMT) # print variance accounted for 
+loadings(fitMT) # pc loadings 
+fitMT$scores
+pca1<-predict(fit,model1_MT)
+scores<-scoreItems(fit$weights,dataMT[,-1],totals=TRUE)
+summary(scores)
+describe(scores$scores)
+```
+
+
+
+### Based on a polychoric correlation matrix
+```{r}
+#fa.poly(cor_dataMT,2,fm="uls",rotate="oblimin")
+onefactor <- fa(cor_dataMT,nfactors = 1,rotate = "oblimin",fm="uls")
+print(onefactor)
+print(onefactor$loadings,cutoff = 0.3)
+fa.diagram(onefactor)
+```
+
+
+##############################################################
+#CONFIRMATORY FACTOR ANALYSIS
+```{r}
+library(lavaan)
+#1 factors model ###########################
+cfa_modelMT <- 'MT =~ MT1 + MT2 + MT3 + MT4 + MT5 + MT6 + MT7 + MT8
+MT2~~MT3
+MT6~~MT7
+MT4~~MT5'
+
+fitMT <- lavaan::cfa(model = cfa_modelMT,
+                   data = dataMT,
+                   estimator="WLSMV")
+                   #ordered=colnames(dataMT))
+summary(fitMT, fit.measures=TRUE)
+lavaan::fitMeasures(fitMT, fit.measures = c("rmsea.scaled",
+                                          "rmsea.ci.lower.scaled",
+                                          "rmsea.ci.upper.scaled",
+                                          "cfi.scaled",
+                                          "tli.scaled",
+                                          "nnfi.scaled",
+                                          "chisq.scaled",
+                                          "pvalue.scaled"))
+
+```
+
+
+```{r}
+#library(semPlot)
+semPaths(fitMT, "std", 
+         theme = "colorblind",
+         #nCharNodes = 0,
+         reorder = TRUE,
+         title = TRUE, 
+         edge.label.cex = 0.95,
+         node.label.cex = 1,
+         equalizeManifests = TRUE,
+         optimizeLatRes = TRUE, 
+         shapeMan = "rectangle",
+         edge.color = "gray48",
+         node.color = "darkgreen",
+         colorlat = "darkgreen",
+         node.width = 1.3,
+         exoCov = TRUE, #deixa aparecer os valores de correlação entre as variáveis
+         thresholds = TRUE,
+         curvePivot = TRUE, 
+         layout = "tree3", 
+         cardinal = "lat cov", 
+         width = 8, 
+         rotation = 2, 
+         intercepts = FALSE,  
+         residScale = 10,
+         sizeMan = 4,
+         residuals = FALSE,
+         sizeLat = 10,  
+         height = 5,   
+         mar = c(2,8,2,8.5),
+         esize=TRUE,
+         style = "lisrel", 
+         what = "paths")
+```
+
+#RELIABILITY
+##############################################################
+
+#Alpha dimensão Ansioso
+```{r}
+cor_dataAL<-cor_auto(dataMT[,c(14:21)]) 
+psych::alpha(cor_dataAL,n.iter=1000,check.keys=TRUE)
+```
+
+
+
+### Modification Indexes
+```{r}
+Est <- parameterEstimates(fitMT, ci = TRUE, standardized = TRUE)
+subset(Est, op == "=~")
+Mod <- modificationIndices(fitMT)
+subset(Mod)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

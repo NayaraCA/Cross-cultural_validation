@@ -1,0 +1,1018 @@
+---
+title: "Validação CAAS - Nayara"
+output: html_notebook
+---
+
+####### Preparando o ambiente e instalando os pacotes
+
+```{r}
+install.packages("VIM")
+install.packages("VIMGUI")
+install.packages("gWidgetsRGtk2")
+install.packages("mi")
+install.packages("epicalc")
+install.packages("sem")
+install.packages("ggplot2")
+install.packages("psych")
+install.packages("RCurl")
+install.packages("irr")
+install.packages("nortest")
+install.packages("moments")
+install.packages("GPArotation")
+install.packages("nFactors")
+install.packages("boot")
+install.packages("psy")
+install.packages("car")
+install.packages("vcd")
+install.packages("gridExtra")
+install.packages("gdata")
+install.packages("sqldf")
+install.packages("reshape2")
+install.packages("mclust")
+install.packages("foreign")
+install.packages("survival")
+install.packages("memisc")
+install.packages("lme4")
+install.packages("lmerTest")
+install.packages("dplyr")
+install.packages("QCA")
+install.packages("VennDiagram")
+install.packages("qgraph")
+install.packages("igraph")
+install.packages("ltm")
+install.packages("gmodels")
+install.packages("eRm")
+install.packages("mirt")
+install.packages("dplyr")
+install.packages("devtools")
+install.packages("reshape")
+install.packages("readxl")
+install.packages("openxlsx")
+install.packages("Hmisc")
+install.packages("lavaanPlot")
+install.packages("bootnet")
+```
+
+
+```{r}
+library("VIM")
+library("VIMGUI")
+library("gWidgetsRGtk2")
+library("mi")
+#library("epicalc")
+library("sem")
+library("ggplot2")
+library("psych")
+library("RCurl")
+library("irr")
+library("nortest")
+library("moments")
+library("GPArotation")
+library("nFactors")
+library("boot")
+library("psy")
+library("car")
+library("vcd")
+library("gridExtra")
+library("gdata")
+library("sqldf")
+library("reshape2")
+library("mclust")
+library("foreign")
+library("survival")
+library("memisc")
+library("lme4")
+library("lmerTest")
+library("dplyr")
+library("QCA")
+library("VennDiagram")
+library("qgraph")
+library("igraph")
+library("ltm")
+library("gmodels")
+library("eRm")
+library("mirt")
+library("dplyr")
+library("devtools")
+library("reshape")
+library("readxl")
+library("openxlsx")
+library("Hmisc")
+library("bootnet")
+library("rgbif")
+```
+
+
+######################################################
+### Upload data set
+```{r}
+dataCAAS <- read_excel("C:/Users/nayar/Dropbox/Doutorado/Projeto Doutorado/Projeto/Estudo 2 - Validação CAAS/Validação AFC/ImpCAAS_treinador_atletaTodos.xlsx")
+datalikert <- read_excel("C:/Users/nayar/Dropbox/Doutorado/Projeto Doutorado/Projeto/Estudo 2 - Validação CAAS/Validação AFC/likert1.xlsx")
+View(dataCAAS)
+View(datalikert)
+```
+
+
+#####################################################
+### RANDOMIZAR OS DADOS#
+
+```{r}
+#dadosrandomizados <- dataCAAS
+#View(dadosrandomizados)
+
+#dadosrandomizados[sample(nrow(dadosrandomizados), 400),]
+#CAASAFE <- dadosrandomizados[sample(nrow(dadosrandomizados), 400),]
+#View(CAASAFE)
+```
+
+
+
+#############################################################
+# Basic Descriptives
+#############################################################
+#Section wih several exploratory data analysis functions
+
+```{r verifying dataset}
+library(pastecs)
+library(skimr)
+dim(dataCAAS) #verify number of rows and columns in the dataset
+str(dataCAAS) #verify data structures
+head(dataCAAS) #show first 5 observations
+names(dataCAAS) #show vector headings
+sapply(dataCAAS, mean, na.rm=TRUE) #calculate mean values
+summary(dataCAAS) #This comand will provide a whole set of descriptive 
+Hmisc::describe(dataCAAS) #gets a set of descriptive data for numeric data
+skim(dataCAAS) #outro comando para descrever as variaveis. Aparece inclusive os histogramas das numericas
+
+
+skewness(dataCAAS[,12:30]) #Will provide skweness analysis
+kurtosis(dataCAAS$Idade) - 3 #Will provide kurtosis analysis
+qplot(dataCAAS$Idade) # histogram plot
+lattice::histogram(dataCAAS$Idade) #histrogram plot (more beatiful)
+```
+
+
+##### Qualidade dos dados
+```{r}
+## Kmo - proporção entre as correlações bivariadas e parciais
+KMO(dataCAAS[,12:30]) #deve ser acima de 0.6 (mas qto mais proximo à unidade, melhor)
+
+## Bartlett Test of Homogeneity of Variances
+bartlett.test(dataCAAS[,12:30]) #colocar o banco e o numero das colunas dos itens. Ideal que seja <0.05
+
+## Figner-Killeen Test of Homogeneity of Variances
+fligner.test(dataCAAS[,12:30])
+```
+
+
+
+#Table 1 overall
+```{r Dados descritivos categóricos}
+table(dataCAAS$Sexo)
+prop.table(table(dataCAAS$Sexo)) *100
+mean(dataCAAS$Idade)
+sd(dataCAAS$Idade)
+table(dataCAAS$Idade)
+prop.table(table(dataCAAS$Sexo)) *100
+table(dataCAAS$Estado)
+prop.table(table(dataCAAS$Estado)) *100
+table(dataCAAS$Modalidade)
+prop.table(table(dataCAAS$Estado)) *100
+table(dataCAAS$Sexo)
+table(dataCAAS$`T ou A`)
+table(dataCAAS$Escolaridade)
+table(dataCAAS$Modalidade)
+table(dataCAAS$Idade)
+table(dataCAAS$TE)
+table(dataCAAS$Modalidade)
+```
+
+
+## Table 1 by group (criar subsets - se necessario)
+```{r by group athlete and coach}
+library(skimr)
+skim(dataCAAS$Idade)
+#atleta
+atleta <- subset(dataCAAS,`T ou A` == "1")
+dim(atleta)
+str(atleta)
+skim(atleta$Idade)
+mean(atleta$Idade)
+sd(atleta$Idade)
+table(atleta$Sexo)
+prop.table(table(atleta$Sexo)) *100
+table(atleta$Modalidade)
+prop.table(table(atleta$Modalidade)) *100
+table(atleta$Escolaridade)
+prop.table(table(atleta$Escolaridade)) *100
+table(atleta$`Nivel comp`)
+prop.table(table(atleta$Escolaridade)) *100
+
+#treinador
+treinador <- subset(dataCAAS,`T ou A` == "2")
+dim(treinador)
+str(treinador)
+skim(treinador$Idade)
+mean(treinador$Idade)
+sd(treinador$Idade)
+table(treinador$Sexo)
+prop.table(table(treinador$Sexo)) *100
+table(treinador$Modalidade)
+prop.table(table(atleta$Modalidade)) *100
+table(atleta$Escolaridade)
+prop.table(table(atleta$Escolaridade)) *100
+table(treinador$`Nivel comp`)
+prop.table(table(atleta$Escolaridade)) *100
+```
+
+
+
+                                    ===================================
+                                    Evidences based on process response
+                                    ===================================
+
+
+
+##############################################################
+### LIKERT BAR GRAPHS 
+##############################################################
+```{r likert plot option 1}
+#install.packages("sjPlot")
+#install.packages("sjmisc")
+library(sjPlot)
+library(sjmisc)
+
+# find all variables from CAAS, which all have an "AP" (ins this case) in their variable name, and then plot the items as likert-plot. Esse tipo de grafico funciona bem se voce tiver numero par da escala likert. Caso contrário, fazer pelo ggplot.
+mydf <- find_var(dataCAAS, pattern = "AP", out = "df")
+plot_likert(mydf,
+            expand.grid = FALSE,
+  values = "sum.outside",
+  show.prc.sign = TRUE)
+```
+
+
+### Likert plot using ggplot (mais bonito que o anterior, apesar de dar mais trabalho)
+```{r likert plot option 2}
+#Para este gráfico, montar uma planilha a parte, com 3 colunas: Itens, Categorias e Respostas.
+#Repetir os itens na coluna, e colocar a frequencia de respostas em cada categoria likert. Fazer isso para todos os itens.
+
+#library(ggplot2)
+#library(dplyr)
+#library(sqldf)
+
+#keeping only relevant columns
+survey <- datalikert[,c("Question","Category","Responses")]
+colnames(survey) <- c("question","Category","responses")
+#View(survey)
+#aggregating for all the responses into a df that contains only the question wise category wise total for all the students
+CAAS_table <- sqldf::sqldf("select question, Category, SUM(responses) as total from survey group by question, category")
+#question wise sum and percentage calculation for each category
+summarized_table <- CAAS_table %>%
+  group_by(question) %>%
+  mutate(countT= sum(total)) %>%
+  #group_by(Category, add=TRUE) %>%
+  mutate(per=round(100*total/countT,2))
+
+#define the colors on the scale
+myColors <- c("darkgreen","#33CC33","lightgreen","lightblue","blue","darkblue", "#003333")
+#actual plot creation
+likertcaas <- ggplot(data = summarized_table, aes(x = question , y = per, fill = Category)) +
+  geom_bar(stat="identity", width = 0.7) +
+  scale_fill_manual (values=myColors) +
+  coord_flip() + 
+  ylab("Likert") + 
+  xlab("Itens") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold")) +
+      theme(plot.title = element_text(size = 20, face = "bold",hjust = 0.5)
+        + theme_bw())
+
+likertcaas
+
+caaslikert <- likertcaas + 
+              theme(plot.title = element_text(size = 18, face = "bold", family = "sans", 
+              color = "black", hjust = 0.5, lineheight = 1.2),
+              plot.subtitle = element_text(size = 15, face = "bold"), 
+              axis.title.x = element_text(size = 12, vjust = -1), 
+              axis.text.y = element_text(size = 10, angle = 30, vjust = -1))
+
+caaslikert
+```
+
+
+##############################################################
+### BOXPLOT ITEM BY ITEM 
+##############################################################
+```{r verify medians distribution}
+bxCAAS <- boxplot(dataCAAS$AP01, 
+        dataCAAS$AP02,
+        dataCAAS$AP03,
+        dataCAAS$AP04,
+        dataCAAS$AP05,
+        dataCAAS$AP06,
+        dataCAAS$AP07,
+        dataCAAS$AP08,
+        dataCAAS$AP09,
+        dataCAAS$AP10,
+        dataCAAS$AP11,
+        dataCAAS$AP12,
+        dataCAAS$AP13,
+        dataCAAS$AP14,
+        dataCAAS$AP15,
+        dataCAAS$AP16,
+        dataCAAS$AP17,
+        dataCAAS$AP18,
+        dataCAAS$AP19,
+        main="Median of items",
+        boxfill = "darkgreen",
+        xlab = "Liker Scale",
+        ylab = "Items",
+        lex.order = TRUE,
+        horizontal = TRUE
+        #names = c("AP01", "AP02", "AP03","AP04","AP05","AP06","AP07","AP08","AP09","AP10","AP11","AP12","AP13","AP14","AP15","AP16","AP17","AP18","AP19")
+        )
+```
+
+#Ou, outra opção para os boxplots (com o ggplot)
+```{r}
+ggplot(databox, aes(Median, AP01:AP19, fill = Median))+
+  geom_boxplot()+
+  geom_point()+
+  xlab("Median of items")+ylab("Items")+
+  theme_minimal()
+```
+
+
+
+#Matriz de correlação
+```{r}
+library(qgraph)
+
+itens <-with(dataCAAS,data.frame(AP01,AP02,AP03,AP04,AP05,AP06,AP07,AP08,AP09,AP10,AP11,                                    AP12,AP13,AP14,AP15,AP16,AP17,AP18,AP19))
+
+cor_data <-cor_auto(itens)
+cor_data
+```
+
+
+### Gerar heatmap para demonstração da matriz de correlação ##################
+```{r step 1}
+#library(ggplot2)
+#library(reshape2)
+
+cor_dataHM<-cor_data
+
+cormat <- round((cor_dataHM),2)
+head(cormat)
+
+melted_cormat <- melt(cormat)
+head(melted_cormat)
+
+ggplot(data = melted_cormat, aes(x=X1, y=X2, fill=value)) +
+  geom_tile()
+```
+
+###### Heatmap 
+```{r heatmap}
+heatmap <- ggplot(data = melted_cormat, aes(Var1, Var2, fill = value))+
+  geom_tile(color = "lightgreen")+
+  scale_fill_gradient2(low = "#003399", high = "#003300", mid = "#FFFFFF", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Items\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed()
+
+heatmap
+```
+
+
+
+
+                            =================================================
+                            Evidences based on intern structure of the test
+                            ================================================
+
+
+==============================================
+Exploratory Factor Analysis (EFA)
+==============================================
+
+### NETWORKS 
+##############################################################
+
+### Network Glasso
+```{r}
+library(igraph)
+comprehension_network_glasso<-qgraph(cor_data, layout="spring",
+vsize=6,esize=20,legend.cex = 2.0, GLratio=1.5, graph="glasso",
+sampleSize=nrow(dataCAAS),
+minimum=0.1, threshold = TRUE)
+```
+
+
+### Building network figures 
+# 3 types are created to get an avarege position and layout
+```{r CORRELATION NETWORK}
+network_cor<-qgraph(cor_data,layout="spring",
+vsize=6,esize=20,legend.cex = 0.5,GLratio=1.5)
+```
+
+
+```{r PARTIAL CORRELATION NETWORK}
+network_pcor<-qgraph(cor_data,layout="spring",
+vsize=6,esize=20,graph="pcor",threshold="holm",
+sampleSize=nrow(dataCAAS),
+legend.cex = 0.5,GLratio=1.5)
+network_pcor
+```
+
+```{r GLASSO NETWORK}
+network_glasso<-qgraph(cor_data,layout="spring",
+ 	vsize=6,esize=20,graph="glasso",
+ 	sampleSize=nrow(dataCAAS),
+ 	legend.cex = 0.5,GLratio=1.5)
+```
+
+##Calculating Community measures
+```{r}
+library(intergraph)
+library(igraph)
+library(qgraph)
+g <- as.igraph(comprehension_network_glasso) #creating igraph object
+#h<-walktrap.community(g) #creatin community object
+#h<-spinglass.community(g, weights=NA)
+h<-cluster_louvain(g, weights = NA)
+plot(h,g) #plotting community network
+h$membership #extracting community weights=NAmembership for each node on the network
+community<-data.frame(h$membership,rownames(cor_data))
+```
+
+
+
+#listing grouping variables in the network resulting from the community analysis
+```{r}
+network_groups<-list(
+Component1=as.numeric(rownames(community)[community[,1]==1]),
+Component2=as.numeric(rownames(community)[community[,1]==2]),
+Component3=as.numeric(rownames(community)[community[,1]==3]))
+
+network_groups<-list(
+  Avoidant=c(1,2,3,4,5,6,7),
+  Anxious=c(8,9,10,11,12,13,14),
+  Secure=c(15,16,17,18,19))
+network_groups
+```
+
+
+## Rede com as dimensões (para o paper)
+```{r}
+#tiff("EFE_rede.tiff", width = 1800, height = 1500,compression = 'lzw', res=300) #para salvar em boa qualidade
+final_importance_network <-qgraph (cor_data,
+                                 esize=15,
+                                 graph="glasso",
+                                 layout="spring",
+                                 sampleSize=nrow(dataCAAS),
+                                 legend.cex = 0.6,
+                                 #cut = 0.3, 
+                                 maximum = 1, 
+                                 #minimum = 0.1, 
+                                 esize = 20,
+                                 vsize = 7, 
+                                 repulsion = 1, 
+                                 groups = network_groups,
+                                 threshold = TRUE,
+                                 GLratio=1.5,
+                                 #palette="ggplot2",
+                                 border.width = 4,
+                                 color=c("blue","lightgreen", "darkgreen", borders = TRUE) #pra escolher as cores
+                                 #labels=TRUE) #,gray=T,)#,nodeNames=nomesqsg,layoutScale=c(2,2)
+)
+#dev.off()
+```
+
+=====================
+Plot all together
+=====================
+
+```{r}
+pdf(file = "Figures_Nayara_CAAS.pdf", width = 8, height = 7)
+survey <- datalikert[,c("Question","Category","Responses")]
+colnames(survey) <- c("question","Category","responses")
+
+CAAS_table <- sqldf::sqldf("select question, Category, SUM(responses) as total from survey group by question, category")
+
+summarized_table <- CAAS_table %>%
+  group_by(question) %>%
+  mutate(countT= sum(total)) %>%
+  #group_by(Category, add=TRUE) %>%
+  mutate(per=round(100*total/countT,2))
+
+#define the colors on the scale
+myColors <- c("#FF99CC","#CCCCFF","#99CCFF","#6699CC","#33CCCC","#339999", "#006666")
+#actual plot creation
+likertcaas <- ggplot(data = summarized_table, aes(x = question , y = per, fill = Category)) +
+  geom_bar(stat="identity", width = 0.7) +
+  scale_fill_manual (values=myColors) +
+  coord_flip() + 
+  ylab("Likert") + 
+  xlab("Items") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold")) +
+      theme(plot.title = element_text(size = 20, face = "bold",hjust = 0.5)
+        + theme_bw())
+
+caaslikert <- likertcaas + 
+              theme(plot.title = element_text(size = 18, face = "bold", family = "sans", 
+              color = "black", hjust = 0.5, lineheight = 1.2),
+              plot.subtitle = element_text(size = 15, face = "bold"), 
+              axis.title.x = element_text(size = 12, vjust = -1), 
+              axis.text.y = element_text(size = 10, angle = 30, vjust = -1))
+
+caaslikert
+
+bxCAAS <- boxplot(dataCAAS$Q01, 
+        dataCAAS$Q02,
+        dataCAAS$Q03,
+        dataCAAS$Q04,
+        dataCAAS$Q05,
+        dataCAAS$Q06,
+        dataCAAS$Q07,
+        dataCAAS$Q08,
+        dataCAAS$Q09,
+        dataCAAS$Q10,
+        dataCAAS$Q11,
+        dataCAAS$Q12,
+        dataCAAS$Q13,
+        dataCAAS$Q14,
+        dataCAAS$Q15,
+        dataCAAS$Q16,
+        dataCAAS$Q17,
+        dataCAAS$Q18,
+        dataCAAS$Q19,
+        main="Median of the items",
+        boxfill = "#99CCFF",
+        xlab = "Liker Scale",
+        ylab = "Items",
+        lex.order = TRUE,
+        horizontal = TRUE
+        #names = c("AP01", "AP02", "AP03","AP04","AP05","AP06","AP07","AP08","AP09","AP10","AP11","AP12","AP13","AP14","AP15","AP16","AP17","AP18","AP19")
+        )
+
+heatmap <- ggplot(data = melted_cormat, aes(X1, X2, fill = value))+ #same 
+  geom_tile(color = "lightgreen")+
+  scale_fill_gradient2(low = "#FF99FF", high = "#33CCCC", mid = "#FFFFFF", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Items\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  theme(axis.text.x = element_blank()) +
+  coord_fixed()
+
+heatmap
+
+
+itens <-with(dataCAAS,data.frame(Q01,Q02,Q03,Q04,Q05,Q06,Q07,Q08,Q09,Q10,Q11,                                    Q12,Q13,Q14,Q15,Q16,Q17,Q18,Q19))
+
+cor_data <-cor_auto(itens)
+final_importance_network <-qgraph (cor_data,
+                                 esize=15,
+                                 graph="glasso",
+                                 layout="spring",
+                                 sampleSize=nrow(dataCAAS),
+                                 legend.cex = 0.6,
+                                 #cut = 0.3, 
+                                 maximum = 1, 
+                                 #minimum = 0.1, 
+                                 esize = 20,
+                                 vsize = 7, 
+                                 repulsion = 1, 
+                                 groups = network_groups,
+                                 threshold = TRUE,
+                                 GLratio=1.5,
+                                 #palette="ggplot2",
+                                 border.width = 4,
+                                 color=c("#33CCCC","#339999", "#FF99CC", borders = TRUE),
+                                 vTrans = 210#pra escolher as cores
+                                 #labels=TRUE) #,gray=T,)#,nodeNames=nomesqsg,layoutScale=c(2,2)
+)
+dev.off()
+```
+
+########################################################3
+####Here is the code you sent me, Armand!
+```{r}
+#library(gridExtra)
+#library(grid)
+#library(egg)
+library(gridBase)
+
+
+pdf(file = "Figures_Nayara_CAAS.pdf", width = 24, height = 12)
+m<-matrix(c(4,1,3,
+            4,1,3,
+            4,1,2,
+            4,1,2), nrow=4, byrow=TRUE)
+layout(m)
+layout.show(n=4)
+
+
+boxplot(dataCAAS$Q01, 
+        dataCAAS$Q02,
+        dataCAAS$Q03,
+        dataCAAS$Q04,
+        dataCAAS$Q05,
+        dataCAAS$Q06,
+        dataCAAS$Q07,
+        dataCAAS$Q08,
+        dataCAAS$Q09,
+        dataCAAS$Q10,
+        dataCAAS$Q11,
+        dataCAAS$Q12,
+        dataCAAS$Q13,
+        dataCAAS$Q14,
+        dataCAAS$Q15,
+        dataCAAS$Q16,
+        dataCAAS$Q17,
+        dataCAAS$Q18,
+        dataCAAS$Q19,
+        main="B)",
+        boxfill = "#99CCFF",
+        xlab = "Liker Scale",
+        ylab = "Items",
+        lex.order = TRUE,
+        horizontal = TRUE
+       )
+
+
+
+
+qgraph(cor_data,
+       esize=15,
+       graph="glasso",
+       layout="spring",
+       sampleSize=nrow(dataCAAS),
+       legend.cex = 1.1, 
+       maximum = 1,
+       esize = 20,
+       vsize = 7, 
+       repulsion = 1, 
+       groups = network_groups,
+       threshold = TRUE,
+       GLratio=1.5,
+       border.width = 4,
+       color=c("#33CCCC","#339999", "#FF99CC", borders = TRUE),
+       vTrans = 210,
+       width = 14, height = 10,
+       title = "D)",
+       title.cex = 1.75)
+
+
+
+
+
+plot.new()
+vps <- baseViewports()
+pushViewport(vps$figure)
+vp1 <-plotViewport(c(0.001,0.001,0.001,0.001))
+p <- ggplot(data = melted_cormat, aes(X1, X2, fill = value))+ #same 
+  geom_tile(color = "lightgreen")+
+  scale_fill_gradient2(low = "#FF99FF", high = "#33CCCC", mid = "#FFFFFF", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Items\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  theme(axis.text.x = element_blank()) +
+ggtitle("C)") +
+  scale_shape_manual(values = c(0:0)) 
+  coord_fixed()
+print(p, vp = vp1)
+
+
+
+
+
+popViewport()
+plot.new()
+vps <- baseViewports()
+pushViewport(vps$figure)
+vp1 <-plotViewport(c(0.001,0.001,0.001,0.001))
+p <- ggplot(data = summarized_table, aes(x = question , y = per, fill = Category)) +
+  geom_bar(stat="identity", width = 0.7) +
+  scale_fill_manual (values=myColors) +
+  coord_flip() + 
+  ylab("Likert") + 
+  xlab("Items") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold")) +
+  theme(plot.title = element_text(size = 20, face = "bold",hjust = 0.0)
+        + theme_bw()) +
+   theme(legend.position = "bottom") +
+   ggtitle("A)") + scale_shape_manual(values = c(0:0)) 
+print(p,vp = vp1)
+dev.off()
+```
+
+
+
+#just works with ggplot package plots
+```{r}
+#install.packages("patchwork")
+library(patchwork)
+#caaslikert+bxCAAS/heatmap+final_importance_network+plot_annotation(tag_levels = c("A", "B", "C", "D"))
+
+  
+caaslikert + heatmap
+```
+
+
+
+## Medida de centralidade da rede
+```{r}
+library(qgraph)
+centralityPlot(network_cor) 
+centralityPlot(network_glasso, include = c("Betweenness","Strength", "Closeness","ExpectedInfluence"), 
+                                      labels = colnames(cor_data))
+```
+
+
+## Medida de confiabilidade da rede
+```{r}
+type <- c('g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g')
+level <- c(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+
+redeCAAS <- estimateNetwork(dataCAAS[,12:30], default = "mgm", tuning = 0.25,
+                              type = type,
+                              level = level, 
+                              rule = "AND",
+                              criterion = "EBIC")
+
+redeCAAS1 <- plot(redeCAAS, layout = "spring", labels = c(1:19), nodeNames = colnames(dataCAAS[,12:30]), legend.cex = 0.5, title = "MGM")
+
+bootTBI <- bootnet(redeCAAS, nBoots = 2500, nCores = 8)
+plot(bootTBI, labels=FALSE, order="sample") 
+```
+
+
+
+
+#Eigenvalues e analise paralela
+```{r}
+library(nFactors)
+par(mfrow=c(2,2)) #Command to configure the plot area for the scree plot graph
+ev <- eigen(cor_data) # get eigenvalues - insert the data you want to calculate the scree plot for
+ev # Show eigend values
+ap <- parallel(subject=nrow(cor_data),var=ncol(cor_data),rep=100,cent=.05) #Calculate the acceleration factor
+summary(ap)
+nS <- nScree(ev$values) #Set up the Scree Plot 
+plotnScree(nS) # Plot the ScreePlot Graph
+my.vss <- VSS(dataCAAS[,12:30],title="CAAS data")
+print(my.vss,digits =2)
+VSS.plot(my.vss, title="CAAS data.")
+scree(dataCAAS[,12:30])
+VSS.scree(dataCAAS[,12:30])
+fa.parallel(dataCAAS[,12:30])
+fa.parallel(dataCAAS[,12:30], fa="fa")
+```
+
+
+```{r}
+fa_CAAS <- fa(dataCAAS[,12:30],3,scores="regression")
+fa_CAAS
+dataCAAS$caas_sum <- rowSums(dataCAAS[,12:30])
+View(dataCAAS)
+
+cor.plot(dataCAAS[,12:30,46])
+rownames(fa_CAAS$loadings) 
+#View(fa_CAAS$scores)
+fa.diagram(fa_CAAS)
+
+
+#Para variáveis ordinais ou dicotômicas
+fa(dataCAAS[,12:30],3,cor="poly", scores = "regression")
+
+#Agora, usar os escores modelados para testar as hipóteses
+scatter.hist(fa_CAAS$scores, dataCAAS$Idade, smooth = F)
+t.test(fa_CAAS$scores~dataCAAS$Sexo)
+```
+
+
+##############################################################
+#PCA
+#############################################################
+# Pricipal Components Analysis
+# entering raw data and extracting PCs 
+# from the correlation matrix 
+
+```{r PCA 1}
+fitCAAS <- psych::principal(cor_data,nfactors=3,rotate="none",scores=TRUE)
+fitCAAS
+summary(fitCAAS) # print variance accounted for 
+loadings(fitCAAS) # pc loadings 
+fitCAAS$scores
+pca1<-predict(fitCAAS,itens)
+scores<-scoreItems(fitCAAS$weights,dataCAAS[,12:30],totals=TRUE)
+summary(scores)
+describe(scores$scores)
+```
+
+## Principal componentes analysis
+```{r PCA 2}
+#library(psych)
+model <- principal(cor_data, nfactors=3, rotate='none', scores=T, cov=T)
+L <- model$loadings            # Just get the loadings matrix
+d <- dataCAAS[,12:30]          # get your data
+dc <- scale(d,scale=FALSE)     # center the data but do not standardize it
+pca1 <- dc %*% L                 # scores are the centered data times the loadings
+#lowerCor(sc)                   #These scores, being principal components
+model
+#                                # should be orthogonal 
+```
+
+
+
+#############################################################    
+#Function to exctract the factor loadings
+```{r Holds of estimations or rotations}
+fa_oblimin<- fa(cor_data,3,fm="uls",rotate="oblimin")
+fa_oblimin2<-fa(cor_dataCAAS,3,fm="pa",rotate="oblimin")
+fa_promax <- fa(cor_data,3,fm="pa",rotate="promax")
+```
+
+
+### Based on a polychoric correlation matrix
+```{r}
+fa.poly(cor_data,3,fm="uls",rotate="oblimin")
+threefactor <- fa(cor_data,nfactors = 3,rotate = "oblimin",fm="uls")
+print(threefactor)
+print(threefactor$loadings,cutoff = 0.3)
+fa.diagram(threefactor)
+```
+
+
+##Variancia media extraida
+```{r Evitativo}
+#Somar o valor das cargas fatorias - fa.diagram(threefactor) - ao quadrado e dividir pelo numero de itens
+a <- 0.713*0.713 + 0.789*0.789 + 0.850*0.850 + 0.747*0.747 + 0.906*0.906 + 0.802*0.802 + 0.750*0.750
+a/7
+```
+
+```{r Ansioso}
+b <- 0.554*0.554 + 0.753*0.753 + 0.708*0.708 + 0.736*0.736 + 0.831*0.831 + 0.796*0.796 + 0.516*0.516
+b/7
+```
+
+```{r Seguro}
+c <-  0.813* 0.813 + 0.922*0.922 + 0.773*0.773 + 0.830*0.830 + 0.892*0.892
+c/5
+```
+
+
+============================================================
+CONFIRMATORY FACTOR ANALYSIS (CFA)
+============================================================
+
+### Modelo com 3 fatores
+```{r}
+threefactors_modelCAAS <-'
+AVT =~ AP01 + AP02 + AP03 + AP04 + AP05 + AP06 + AP07
+ANX =~ AP08 + AP09 + AP10 + AP11 + AP12 + AP13 + AP14
+SEC =~ AP15 + AP16 + AP17 + AP18 + AP19'
+
+fitCAAS <- lavaan::cfa(threefactors_modelCAAS, data = dataCAAS,
+                   estimator="WLSMV",
+                   ordered=colnames(dataCAAS))
+summary(fitCAAS, fit.measures=TRUE)
+#fitMeasures(fit, fit.measures = "all", baseline.model = NULL)
+#parameterEstimates(fit)
+lavaan::fitMeasures(fitCAAS, fit.measures = c("rmsea.scaled",
+                                          "rmsea.ci.lower.scaled",
+                                          "rmsea.ci.upper.scaled",
+                                          "cfi.scaled",
+                                          "tli.scaled",
+                                          "nnfi.scaled",
+                                          "chisq.scaled",
+                                          "pvalue.scaled"
+                                          ))
+```
+
+
+## Figura final (código antigo + modelo Joao)
+```{r}
+#tiff("Path-CASS.tiff", width = 1800, height = 1500,compression = 'lzw', res=300)
+semPaths(fitCAAS, 
+         "std",
+         whatLabels = "std.all",
+         #theme = "colorblind",
+         nCharNodes = 0,
+         #reorder = FALSE,
+         title = TRUE, 
+         edge.label.cex = 0.95,
+         node.label.cex = 1,
+         equalizeManifests = FALSE,
+         optimizeLatRes = TRUE, 
+         shapeMan = "rectangle",
+         edge.color = "gray48",
+         node.color = "darkgreen",
+         colorlat = "darkgreen",
+         node.width = 1.3,
+         exoCov = TRUE, #deixa aparecer os valores de correlação entre as variáveis
+         thresholds = FALSE,
+         curvePivot = TRUE, 
+         layout = "tree2", 
+         cardinal = "lat cov", #para aparecer a covariancia entre as latentes
+         width = 8, 
+         rotation = 2, 
+         intercepts = FALSE,  
+         #residScale = 10,
+         sizeMan = 4,
+         residuals = FALSE, #controla a aparição dos erros dos itens (nao precisa aparecer pq o erro é 1-lamba²)
+         sizeLat = 10,  
+         height = 5,   
+         mar = c(2,8,2,8.5),
+         esize=TRUE,
+         style = "ram", ##usar o "ram" ao invés do "lisrel" tira o overlap dos erros
+         what = "paths"
+         )
+#dev.off()
+```
+
+
+
+
+=========================================================
+RELIABILITY
+=========================================================
+
+```{r formas alternativas de reliability}
+library(psych)
+splitHalf(dataCAAS[,12:30]) 
+guttman(dataCAAS[,12:30])
+omega(cor_auto(dataCAAS[,12:30]))
+```
+
+
+
+### Modification Indexes
+```{r}
+library(lavaan)
+EstCAAS <- parameterEstimates(fitCAAS, ci = TRUE, standardized = TRUE)
+subset(EstCAAS, op == "=~")
+Mod <- modificationIndices(fitCAAS)
+subset(Mod)
+```
+
+
+#Composite Reliabilty
+```{r}
+sum(EstCAAS[1:7,4])^2/(sum(EstCAAS[1:7,4])^2+sum(EstCAAS[20:26,4])) ### Fator 1 - mudar os valores
+sum(EstCAAS[8:14,4])^2/(sum(EstCAAS[8:14,4])^2+sum(EstCAAS[27:33,4])) ### Fator 2 
+sum(EstCAAS[15:19,4])^2/(sum(EstCAAS[15:19,4])^2+sum(EstCAAS[34:38,4])) ### Fator 3 
+```
+
+
+
+
+===========================================================
+Evidences based on relation to other variables
+===========================================================
+
+### Correlação para validade convergente e discriminante
+```{r}
+cor_dataex<-cor_auto(dataCAAS[,c(31:33,45)]) ### sem dimensões e variáveis independentes
+cor_dataex
+colnames(cor_dataex)
+```
+
+#Heatmap para representar a validade convergente e discriminante
+```{r first step}
+cor_dataVC<-cor_dataex
+
+cormat <- round((cor_dataVC),2)
+head(cormat)
+
+melted_cormat <- melt(cormat)
+head(melted_cormat)
+
+ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) +
+  geom_tile()
+```
+
+
+```{r heatmap para reportar no paper}
+ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "green", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Items\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed()
+```
+
+
+
